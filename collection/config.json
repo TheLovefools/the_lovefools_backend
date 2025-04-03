@@ -1,0 +1,9 @@
+{
+  "API_KEY": "696AC84FDA14118AC9FC4EFD6E04BF",
+  "MERCHANT_ID": "SG1876",
+  "ENABLE_LOGGING": false,
+  "PAYMENT_PAGE_CLIENT_ID": "hdfcmaster",
+  "BASE_URL": "https://smartgatewayuat.hdfcbank.com",
+  "RESPONSE_KEY": "23C8F27937F4ED098B2AF179E41225",
+  "LOGGING_PATH": "https://the-lovefools.s3.eu-north-1.amazonaws.com/uploads/PaymentHandler.log"
+}

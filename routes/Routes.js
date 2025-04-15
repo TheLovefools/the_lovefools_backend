@@ -140,7 +140,7 @@ router.post("/initiateRefund", InitiatePaymentRefund);
 
 
 //WhatsappOtp 
-router.post("/whatsappotp", WhatsappOtp);
+router.post("/whatsappotp", WhatsappOtp); 
 
 //Enquiry module
 router.post("/addEnquiry", AddEventEnquiryData);

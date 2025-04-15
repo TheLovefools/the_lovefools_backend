@@ -11,6 +11,12 @@ const {
   GetReceiptsList,
   DeleteReceipt,
 } = require("../collection/ReceiptController");
+
+const {
+  WhatsappOtp
+} = require("../collection/WhatsappOtpController");
+
+
 const {
   AddTableData,
   UpdateTableData,
@@ -131,6 +137,10 @@ router.post("/deleteReceipt/:receiptId", DeleteReceipt);
 router.post("/initiatePayment", InitiatePayment);
 router.post("/handlePaymentResponse", HandlePaymentresponse);
 router.post("/initiateRefund", InitiatePaymentRefund);
+
+
+//WhatsappOtp 
+router.post("/whatsappotp", WhatsappOtp);
 
 //Enquiry module
 router.post("/addEnquiry", AddEventEnquiryData);

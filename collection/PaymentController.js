@@ -67,7 +67,10 @@ const HandlePaymentresponse = async (req, res) => {
         { orderId },
         { paymentSuccess: true }
       );
-      return res.redirect("https://thelovefools.in/order-success");
+      if(res){
+
+        return res.redirect("https://thelovefools.in/order-success");
+      }
     }
 
     const html = makeOrderStatusResponse(

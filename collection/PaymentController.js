@@ -8,6 +8,16 @@ const ReceiptSchema = require("../schema/Receipt");
 
 const upload = multer(); // Middleware for parsing FormData
 
+const parseForm = (req) => {
+  return new Promise((resolve, reject) => {
+    const form = formidable({ multiples: true });
+    form.parse(req, (err, fields, files) => {
+      if (err) reject(err);
+      resolve({ fields, files });
+    });
+  });
+};
+
 const InitiatePayment = async (req, res) => {
   await new Promise((resolve) => upload.any()(req, res, resolve)); // Parse FormData
 
@@ -44,7 +54,8 @@ const InitiatePayment = async (req, res) => {
 };
 
 const HandlePaymentresponse = async (req, res) => {
-  const orderId = req.body.order_id || req.body.orderId;
+  const { fields } = await parseForm(req);
+  const orderId = fields.order_id || fields.orderId;
   const paymentHandler = PaymentHandler.getInstance();
 
   if (orderId === undefined) {

@@ -44,6 +44,8 @@ const InitiatePayment = async (req, res) => {
 };
 
 const HandlePaymentresponse = async (req, res) => {
+  await new Promise((resolve) => upload.any()(req, res, resolve)); // Parse FormData
+
   const orderId = req.body.order_id || req.body.orderId;
   const paymentHandler = PaymentHandler.getInstance();
 

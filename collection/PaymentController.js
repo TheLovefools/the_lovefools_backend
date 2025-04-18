@@ -13,7 +13,7 @@ const InitiatePayment = async (req, res) => {
 
   const orderId = `order_${Date.now()}`;
   const amount = req.body.amount;
-  const returnUrl = `https://lovefools-backend.vercel.app/api/user/handlePaymentResponse`;
+  const returnUrl = `https://api.thelovefools.in/api/user/handlePaymentResponse`;
   const paymentHandler = PaymentHandler.getInstance();
   try {
     const orderSessionResp = await paymentHandler.orderSession({
@@ -64,7 +64,7 @@ const HandlePaymentresponse = async (req, res) => {
     const orderStatus = orderStatusResp.status;
     if (orderStatus) {
       try {
-        const res = await ReceiptSchema.findOneAndUpdate(
+       await ReceiptSchema.findOneAndUpdate(
           { orderId },
           { paymentSuccess: true }
         );      

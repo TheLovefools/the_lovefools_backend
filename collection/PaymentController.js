@@ -54,7 +54,7 @@ const HandlePaymentresponse = async (req, res) => {
   try {
     const orderStatusResp = await paymentHandler.orderStatus(orderId);
     if (!validateHMAC_SHA256(req.body, paymentHandler.getResponseKey())) {
-      const deletedReceipt = await ReceiptSchema.findOneAndDelete({
+      const deletedReceipt = await ReceiptSchema.deleteOne({
         orderId: orderId,
       });
 

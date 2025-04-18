@@ -71,7 +71,7 @@ const HandlePaymentresponse = async (req, res) => {
           return res.redirect("https://thelovefools.in/order-success");
       
       } catch (error) {
-        console.log(error)
+        console.log("orderId error",error)
         
       }
     }

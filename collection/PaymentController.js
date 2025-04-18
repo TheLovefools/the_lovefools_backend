@@ -63,13 +63,16 @@ const HandlePaymentresponse = async (req, res) => {
 
     const orderStatus = orderStatusResp.status;
     if (orderStatus) {
-      const res = await ReceiptSchema.findOneAndUpdate(
-        { orderId },
-        { paymentSuccess: true }
-      );
-      if(res){
-
-        return res.redirect("https://thelovefools.in/order-success");
+      try {
+        const res = await ReceiptSchema.findOneAndUpdate(
+          { orderId },
+          { paymentSuccess: true }
+        );      
+          return res.redirect("https://thelovefools.in/order-success");
+      
+      } catch (error) {
+        console.log(error)
+        
       }
     }
 

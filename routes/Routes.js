@@ -37,6 +37,7 @@ const {
   GetEventsList,
   DeleteEvent,
 } = require("../collection/EventController");
+
 const {
   AddGalleryData,
   UpdateGalleryData,
@@ -44,6 +45,15 @@ const {
   DeleteGallery,
   GetGalleryListByUser
 } = require("../collection/GalleryController");
+
+const {
+  AddAlaCarteData,
+  UpdateAlaCarteData,
+  GetAlaCarteMenu,
+  DeleteAlaCarteMenu,
+  GetAlaCarteMenuByUser
+} = require("../collection/AlaCarteController");
+
 const {
   AddTestimonialData,
   UpdateTestimonialData,
@@ -178,21 +188,9 @@ router.post("/deleteTable/:tableId", DeleteTable);
 
 //Table module
 router.post("/addUserInformation", AddUserInformationData);
-router.post(
-  "/updateUserInformation/:userId",
-
-  UpdateUserInformationData
-);
-router.post(
-  "/getUserInformationList",
-
-  GetUserInformationList
-);
-router.post(
-  "/deleteUserInformation/:userId",
-
-  DeleteUserInformation
-);
+router.post("/updateUserInformation/:userId", UpdateUserInformationData);
+router.post("/getUserInformationList", GetUserInformationList);
+router.post("/deleteUserInformation/:userId", DeleteUserInformation);
 
 //Table module
 router.post("/addEvent", AddEventData);
@@ -207,25 +205,24 @@ router.post("/getGalleryList", GetGalleryList);
 router.post("/deleteGallery/:galleryId", DeleteGallery);
 router.post("/getGalleryListByUser", GetGalleryListByUser);
 
+//Ala Carte module
+router.post("/addAlaCarteMenu", AddAlaCarteData);
+router.post("/updateAlaCarteMenu/:alaMenuId", UpdateAlaCarteData);
+router.post("/getAlaCarteMenu", GetAlaCarteMenu);
+router.post("/deleteAlaCarteMenu/:alaMenuId", DeleteAlaCarteMenu);
+router.post("/getAlaCarteMenuByUser", GetAlaCarteMenuByUser);
 
 //Testimonial module
 router.post("/addTestimonial", AddTestimonialData);
-router.post(
-  "/updateTestimonial/:testimonialId",
-
-  UpdateTestimonialData
-);
+router.post("/updateTestimonial/:testimonialId", UpdateTestimonialData);
 router.post("/getTestimonialList", GetTestimonialList);
-router.post(
-  "/deleteTestimonial/:testimonialId",
-
-  DeleteTestimonial
-);
+router.post("/deleteTestimonial/:testimonialId", DeleteTestimonial);
 router.post("/addCMS", AddCMSData);
 router.post("/updateCMS/:CMDId", UpdateCMSData);
 router.post("/getCMSList", GetCMSList);
 // Route to upload a photo with an ID in the URL
 router.post("/upload/:id", upload.single("file"), replaceFileIfExists);
+// router.post("/upload/:id", upload.any(), replaceFileIfExists);
 
 router.get("/photo/:id", getPhoto);
 
@@ -238,17 +235,9 @@ router.post("/getContactList", GetContactList);
 router.post("/deleteContact/:ContactId", DeleteContact);
 
 router.post("/addUpComingEvent", AddUpcomingEventData);
-router.post(
-  "/updateUpComingEvent/:upcomingEventID",
-
-  UpdateUpcomingEventData
-);
+router.post("/updateUpComingEvent/:upcomingEventID", UpdateUpcomingEventData);
 router.post("/getUpComingEventList", GetUpcomingEventsList);
-router.post(
-  "/deleteUpComingEvent/:upcomingEventID",
-
-  DeleteUpcomingEvent
-);
+router.post("/deleteUpComingEvent/:upcomingEventID", DeleteUpcomingEvent);
 router.post("/delete-image", DeleteImg);
 
 // router.post("/upload", upload.single("photo"), (req, res) => {

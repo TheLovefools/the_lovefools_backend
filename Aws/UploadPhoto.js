@@ -54,11 +54,12 @@ const isVideoFile = (extension) => {
 
 const replaceFileIfExists = async (req, res, next) => {
   const id = req.body.id || req.params.id;
+
+  console.log('Uploaded files:', req.file);
+
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded." });
-  }
-
-  
+  }  
 
   try {
     const isVideo = isVideoFile(getFileExtension(req.file.originalname));
@@ -184,7 +185,7 @@ const DeleteImg = async (req, res) => {
     const versions = await s3.listObjectVersions(listParams).promise();
 
     if (versions.Versions.length === 0) {
-      return res.status(404).json({ error: "File not found." });
+      return res.status(404).json({ error: `File not found. ${key}` });
     }
 
     // Prepare delete requests for all versions

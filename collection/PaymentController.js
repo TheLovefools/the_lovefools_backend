@@ -11,28 +11,42 @@ const upload = multer(); // Middleware for parsing FormData
 const InitiatePayment = async (req, res) => {
   await new Promise((resolve) => upload.any()(req, res, resolve)); // Parse FormData
 
-  const orderId = `order_${Date.now()}`;
-  const amount = req.body.amount;
+  // const orderId = `order_${Date.now()}`;
+  // const amount = req.body.amount;
   const returnUrl = `https://api.thelovefools.in/api/user/handlePaymentResponse`;
   const paymentHandler = PaymentHandler.getInstance();
+
+  const order_id = req.body.order_id;
+  const amount = req.body.amount;
+  const customer_email = req.body.customer_email;
+  const customer_phone = req.body.customer_phone;
+  const first_name = req.body.first_name;
+  const last_name = req.body.last_name;
+
   try {
     const orderSessionResp = await paymentHandler.orderSession({
-      order_id: orderId,
-      amount,
+      order_id: order_id,
+      amount: amount,
       currency: "INR",
       return_url: returnUrl,
-      // [MERCHANT_TODO]:- please handle customer_id, it's an optional field but we suggest to use it.
       customer_id: "sample-customer-id",
+      // [MERCHANT_TODO]:- please handle customer_id, it's an optional field but we suggest to use it.
       // please note you don't have to give payment_page_client_id here, it's mandatory but
       // PaymentHandler will read it from config.json file
       // payment_page_client_id: paymentHandler.getPaymentPageClientId()
+
+      customer_email,
+      customer_phone,
+      first_name,
+      last_name
     });
     res.status(200).json({
       StatusCode: 200,
-      orderId: orderId,
+      orderId: order_id,
       redict_url: orderSessionResp.payment_links.web,
     });
     // return res.redirect(orderSessionResp.payment_links.web);
+    // res.status(200).json({orderSessionResp})
   } catch (error) {
     // [MERCHANT_TODO]:- please handle errors
     if (error instanceof APIException) {
@@ -40,6 +54,7 @@ const InitiatePayment = async (req, res) => {
     }
     // [MERCHANT_TODO]:- please handle errors
     return res.send("Something went wrong");
+    // return res.send(error);
   }
 };
 
@@ -52,30 +67,57 @@ const HandlePaymentresponse = async (req, res) => {
   }
 
   try {
-    const orderStatusResp = await paymentHandler.orderStatus(orderId);
-    if (!validateHMAC_SHA256(req.body, paymentHandler.getResponseKey())) {
-      const deletedReceipt = await ReceiptSchema.deleteOne({
-        orderId: orderId,
-      });
+    const validationParams = {
+      status_id: req.body.status_id,
+      status: req.body.status,
+      order_id: req.body.order_id,
+      signature: req.body.signature,
+      signature_algorithm: req.body.signature_algorithm
+    };
+    
+    // 🔐 Validate HMAC
+    // const isValid = validateHMAC_SHA256(req.body, paymentHandler.getResponseKey());
+    const isValid = validateHMAC_SHA256(validationParams, paymentHandler.getResponseKey());
 
-      return res.redirect("https://thelovefools.in/booking");
+    if (!isValid) {
+      return res.send("Signature verification failed");
     }
 
+    // ✅ Continue with order status check
+    const orderStatusResp = await paymentHandler.orderStatus(orderId);
     const orderStatus = orderStatusResp.status;
+    let message = "";
+
     if (orderStatus) {
       try {
        await ReceiptSchema.findOneAndUpdate(
           { orderId },
           { paymentSuccess: true }
         );      
-          return res.redirect("https://thelovefools.in/order-success");
-      
+        return res.redirect("https://thelovefools.in/order-success");      
       } catch (error) {
-        console.log("orderId error",error)
-        
+        console.log("orderId error",error)        
+      }
+      switch (orderStatus) {
+        case "CHARGED":
+          message = "order payment done successfully";
+          break;
+        case "PENDING":
+        case "PENDING_VBV":
+          message = "order payment pending";
+          break;
+        case "AUTHORIZATION_FAILED":
+          message = "order payment authorization failed";
+          break;
+        case "AUTHENTICATION_FAILED":
+          message = "order payment authentication failed";
+          break;
+        default:
+          message = "order status " + orderStatus;
+          break;
       }
     }
-
+    
     const html = makeOrderStatusResponse(
       "Merchant Payment Response Page",
       message,
@@ -138,29 +180,29 @@ const makeOrderStatusResponse = (title, message, req, response) => {
   }
 
   return `
-          <html>
-          <head>
-              <title>${title}</title>
-          </head>
-          <body>
-              <h1>${message}</h1>
-  
-              <center>
-                  <font size="4" color="blue"><b>Return url request body params</b></font>
-                  <table border="1">
-                      ${inputParamsTableRows}
-                  </table>
-              </center>
-  
-              <center>
-                  <font size="4" color="blue"><b>Response received from order status payment server call</b></font>
-                  <table border="1">
-                      ${orderTableRows}
-                  </table>
-              </center>
-          </body>
-          </html>
-      `;
+    <html>
+    <head>
+        <title>${title}</title>
+    </head>
+    <body>
+        <h1>${message}</h1>
+
+        <center>
+            <font size="4" color="blue"><b>Return url request body params</b></font>
+            <table border="1">
+                ${inputParamsTableRows}
+            </table>
+        </center>
+
+        <center>
+            <font size="4" color="blue"><b>Response received from order status payment server call</b></font>
+            <table border="1">
+                ${orderTableRows}
+            </table>
+        </center>
+    </body>
+    </html>
+  `;
 };
 
 module.exports = {

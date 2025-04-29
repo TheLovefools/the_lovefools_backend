@@ -161,6 +161,7 @@ class PaymentHandler {
         "User-Agent": `NODEJS_KIT/1.0.0`,
         version: this.getVersion(),
         "x-merchantid": this.getMerchantId(),
+        "x-customerid": this.getCustomerId(),
         ...headers,
         Authorization: "Basic " + this.base64EncodeKey(this.getApiKey()),
       };
@@ -349,6 +350,10 @@ class PaymentHandler {
   // helpers getters and setters
   getMerchantId() {
     return this.paymentConfigs.MERCHANT_ID;
+  }
+
+  getCustomerId() {
+    return this.paymentConfigs.CUSTOMER_ID;
   }
 
   getBaseUrl() {

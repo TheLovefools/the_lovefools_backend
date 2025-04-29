@@ -1,6 +1,7 @@
 {
   "API_KEY": "696AC84FDA14118AC9FC4EFD6E04BF",
   "MERCHANT_ID": "SG1876",
+  "CUSTOMER_ID": "32538765",
   "ENABLE_LOGGING": false,
   "PAYMENT_PAGE_CLIENT_ID": "hdfcmaster",
   "BASE_URL": "https://smartgatewayuat.hdfcbank.com",

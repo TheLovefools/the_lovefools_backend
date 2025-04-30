@@ -61,20 +61,31 @@ class SimpleLogger {
   }
 }
 
-/**
- * Singleton class
- */
+/** Singleton class */
 class PaymentHandler {
-  /**
-   * use this as it facilitates with some basic error handling
-   */
-  static getInstance(userSpecifiedConfigPath) {
-    return new PaymentHandler(userSpecifiedConfigPath);
+  /** use this as it facilitates with some basic error handling  */
+  static paymentHandlerInstance;
+
+  // static getInstance(userSpecifiedConfigPath) {
+  //   return new PaymentHandler(userSpecifiedConfigPath);
+  // }
+
+  static getInstance(orderId) {
+    if (!PaymentHandler.paymentHandlerInstance) {
+      PaymentHandler.paymentHandlerInstance = new PaymentHandler(orderId);
+    } else {
+      // If already initialized, just set the new order ID
+      PaymentHandler.paymentHandlerInstance.setOrderId(orderId);
+    }
+    return PaymentHandler.paymentHandlerInstance;
   }
 
-  constructor(userSpecifiedConfigPath) {
+  constructor(orderId) {
     if (PaymentHandler.paymentHandlerInstance !== undefined)
       return PaymentHandler.paymentHandlerInstance;
+
+    this.order_id = orderId; // Save order_id
+
     this.paymentConfigs = undefined;
     const configPath = path.resolve(__dirname, "config.json");
     try {
@@ -87,7 +98,7 @@ class PaymentHandler {
     this.validatePaymentConfigs();
     // Initialize logger with fallback and log the result
     try {
-      this.logger = new SimpleLoggerS3();
+      this.logger = new SimpleLoggerS3(this.order_id);
       this.logger.disableLogging = !this.getEnableLogging();
       console.log("Resolved log path success:", this.getLoggingPath());
       console.log("Using SimpleLoggerS3 for logging.");
@@ -114,7 +125,7 @@ class PaymentHandler {
 
     PaymentHandler.paymentHandlerInstance = this;
     return PaymentHandler.paymentHandlerInstance;
-  }
+  }  
 
   orderSession(params) {
     this.validateParams(params);
@@ -167,9 +178,11 @@ class PaymentHandler {
   }
 
   // utility functions
+  // level, apiTag, paymentRequestId, message, value
   makeServiceCall({ apiTag, path, method, headers = {}, query = {}, body }) {
     return new Promise((resolve, reject) => {
-      const paymentRequestId = this.generateUUID();
+      // const paymentRequestId = this.generateUUID();
+      const paymentRequestId = this.getOrderId();
       headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "User-Agent": `NODEJS_KIT/1.0.0`,
@@ -186,11 +199,13 @@ class PaymentHandler {
         path +
         (encodedQueryParams.length === 0 ? "" : `?${encodedQueryParams}`);
 
+      // 1st log
       this.logger.info(apiTag, paymentRequestId, "Request parameters", payload);
 
       const fullPath = new URL(pathWithQueryParams, this.getBaseUrl());
       const agent = new https.Agent({ keepAlive: true });
 
+      // 2nd log
       this.logger.info(
         apiTag,
         paymentRequestId,
@@ -224,7 +239,18 @@ class PaymentHandler {
       });
 
       req.on("response", (res) => {
+
+        //test log
+        // this.logger.info(
+        //   apiTag,
+        //   paymentRequestId,
+        //   "Received Http Response Code",
+        //   res
+        // );
+
         res.setEncoding("utf-8");
+
+        // 3rd log
         this.logger.info(
           apiTag,
           paymentRequestId,
@@ -238,6 +264,8 @@ class PaymentHandler {
         });
 
         res.once("end", () => {
+
+          // 4th log
           this.logger.info(
             apiTag,
             paymentRequestId,
@@ -267,6 +295,8 @@ class PaymentHandler {
 
           if (res.statusCode >= 200 && res.statusCode < 300) {
             // this.logger.info(apiTag, paymentRequestId, "Successful transaction", resJson);
+            //test log
+            // this.logger.info(apiTag, paymentRequestId, "Test 2 - res", res);
             return resolve(resJson);
           } else {
             let status = resJson["status"],
@@ -349,6 +379,14 @@ class PaymentHandler {
 
   base64EncodeKey(str) {
     return Buffer.from(str).toString("base64");
+  }
+
+  setOrderId(orderId) {
+    this.order_id = orderId;
+  }
+
+  getOrderId() {
+    return this.order_id;
   }
 
   generateUUID = () => {

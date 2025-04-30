@@ -14,7 +14,9 @@ const InitiatePayment = async (req, res) => {
   // const orderId = `order_${Date.now()}`;
   // const amount = req.body.amount;
   const returnUrl = `https://api.thelovefools.in/api/user/handlePaymentResponse`;
-  const paymentHandler = PaymentHandler.getInstance();
+  // const paymentHandler = PaymentHandler.getInstance(req.body.order_id);
+  // const paymentHandler = new PaymentHandler(req.body.order_id);
+  const paymentHandler = PaymentHandler.getInstance(req.body.order_id);
 
   const order_id = req.body.order_id;
   const amount = req.body.amount;

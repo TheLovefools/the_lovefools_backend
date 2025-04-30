@@ -14,7 +14,7 @@ class SimpleLoggerS3 {
     this.bucketName = process.env.AWS_BUCKET_NAME; // e.g., "my-app-logs"
     this.logBuffer = "";
     this.paymentRequestId = paymentRequestId || Date.now(); // Use request ID or timestamp
-    this.fileName = `transaction-logs/log_new_${this.paymentRequestId}.log`; // Unique file name for the operation
+    this.fileName = `transaction-logs/order_id_${this.paymentRequestId}.log`; // Unique file name for the operation
   }
 
   // Log a message (log is accumulated in memory)

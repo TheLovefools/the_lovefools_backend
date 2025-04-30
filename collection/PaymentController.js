@@ -5,6 +5,7 @@ const {
 } = require("./PaymentHandler");
 const multer = require("multer");
 const ReceiptSchema = require("../schema/Receipt");
+const { default: axios } = require("axios");
 
 const upload = multer(); // Middleware for parsing FormData
 
@@ -63,6 +64,8 @@ const InitiatePayment = async (req, res) => {
 const HandlePaymentresponse = async (req, res) => {
   const orderId = req.body.order_id || req.body.orderId;
   const paymentHandler = PaymentHandler.getInstance();
+  
+  const customerNumber = req.body.sdk_payload.payload.customerPhone;
 
   if (orderId === undefined) {
     return res.send("Something went wrong");
@@ -88,21 +91,39 @@ const HandlePaymentresponse = async (req, res) => {
     // ✅ Continue with order status check
     const orderStatusResp = await paymentHandler.orderStatus(orderId);
     const orderStatus = orderStatusResp.status;
-    let message = "";
 
     if (orderStatus) {
-      try {
-       await ReceiptSchema.findOneAndUpdate(
-        { orderId },
-        {
-          orderStatus: orderStatusResp.status,
-          paymentSuccess: true
+
+      // 1. Send WhatsApp API
+      if (orderStatus === "CHARGED") {
+        try {
+          const apiResponse = await axios.post(
+            `https://api.thelovefools.in/api/user/whatsappSuccess`,
+            {
+              mobile: "9970775956",
+              bookingDate: "112266",
+            }
+          );
+          console.log("WhatsApp sent successfully:", apiResponse.data);
+        } catch (error) {
+          console.error("WhatsApp API error:", error.message);
+          // Optional: log to DB or notify admin
         }
-        );      
-        return res.redirect("https://thelovefools.in/order-success");      
-      } catch (error) {
-        console.log("orderId error",error)        
       }
+
+      try {
+        await ReceiptSchema.findOneAndUpdate(
+          { orderId },
+          {
+            orderStatus: orderStatusResp.status,
+            paymentSuccess: true,
+          }
+        );
+        return res.redirect("https://thelovefools.in/order-success");
+      } catch (error) {
+        console.log("orderId error", error);
+      }
+      let message = "";
       switch (orderStatus) {
         case "CHARGED":
           message = "order payment done successfully";

@@ -16,6 +16,9 @@ const {
   WhatsappOtp
 } = require("../collection/WhatsappOtpController");
 
+const {
+  WhatsappPaymentConfirmation
+} = require("../collection/WhatsappPaymentController");
 
 const {
   AddTableData,
@@ -153,6 +156,7 @@ router.post("/initiateRefund", InitiatePaymentRefund);
 
 //WhatsappOtp 
 router.post("/whatsappotp", WhatsappOtp); 
+router.post("/whatsappSuccess", WhatsappPaymentConfirmation); 
 
 //Enquiry module
 router.post("/addEnquiry", AddEventEnquiryData);

@@ -45,6 +45,8 @@ next-env.d.ts
 /collection/PaymentController_4.js
 /collection/PaymentController_5.js
 /collection/PaymentController_final.js
+/collection/PaymentController_ff.js
+/collection/PaymentHandler_fff.js
 /collection/PaymentHandler_bkp.js
 /collection/PaymentHandler_2.js
 /collection/PaymentHandler_3.js
@@ -61,3 +63,4 @@ next-env.d.ts
 /Aws/UploadPhoto_multi.js
 /schema/EventEnquiry_bkp.js
 /logs/PaymentHandlerOld.log
+/collection/ReceiptController_bkp.js

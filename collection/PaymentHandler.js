@@ -28,7 +28,7 @@ class SimpleLogger {
     if (typeof value === "object") {
       valueStr = JSON.stringify(value);
     }
-    const logMessage = `${timestamp} [${level.toUpperCase()}] apiTag1=${apiTag}, paymentRequestId=${paymentRequestId}, message=${message}, value=${valueStr}${EOL}`;
+    const logMessage = `${timestamp} [${level.toUpperCase()}] apiTag=${apiTag}, paymentRequestId=${paymentRequestId}, message=${message}, value=${valueStr}${EOL}`;
     fs.appendFile(this.logFilePath, logMessage, (err) => {
       if (err) console.error("Failed to write to log file:", err.message);
     });

@@ -78,7 +78,9 @@ const {
   AddOrderData,
   changeStatusOrder,
 } = require("../collection/OrderController");
-
+const {
+  GetOrderStatus,
+} = require("../collection/PaymentStatusController");
 const {
   InitiatePayment,
   InitiatePaymentRefund,
@@ -226,8 +228,7 @@ router.post("/upload/:id", upload.single("file"), replaceFileIfExists);
 
 router.get("/photo/:id", getPhoto);
 
-router.get("/getOrder", AddOrderData);
-router.get("/UpdateOrder", changeStatusOrder);
+router.get("/getOrderStatus", GetOrderStatus);
 
 router.post("/addContact", AddContactData);
 router.post("/updateContact/:ContactId", UpdateContactData);

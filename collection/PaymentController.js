@@ -93,8 +93,11 @@ const HandlePaymentresponse = async (req, res) => {
     if (orderStatus) {
       try {
        await ReceiptSchema.findOneAndUpdate(
-          { orderId },
-          { paymentSuccess: true }
+        { orderId },
+        {
+          orderStatus: orderStatusResp.status,
+          paymentSuccess: true
+        }
         );      
         return res.redirect("https://thelovefools.in/order-success");      
       } catch (error) {

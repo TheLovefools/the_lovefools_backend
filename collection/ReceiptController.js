@@ -58,18 +58,26 @@ const GetReceiptsList = async (req, res) => {
     const searchableFields = ["emailId", "receiptName", "menuName", "status"];
 
     // Create the query object for searching
-    const query = {
-      paymentSuccess: true, // Only get receipts where paymentSuccess is true
+    // const queryShowPaidOnly = {
+    //   paymentSuccess: true, // Only get receipts where paymentSuccess is true
+    //   ...(searchKey && {
+    //     $or: searchableFields.map((field) => ({
+    //       [field]: { $regex: searchKey, $options: "i" }, // Case-insensitive regex
+    //     })),
+    //   }),
+    // };
+
+    const queryShowAll = {
       ...(searchKey && {
         $or: searchableFields.map((field) => ({
-          [field]: { $regex: searchKey, $options: "i" }, // Case-insensitive regex
+          [field]: { $regex: searchKey, $options: "i" }, // Case-insensitive match
         })),
       }),
     };
 
-    const totalReceipts = await ReceiptSchema.countDocuments(query);
+    const totalReceipts = await ReceiptSchema.countDocuments(queryShowAll);
 
-    const receipts = await ReceiptSchema.find(query)
+    const receipts = await ReceiptSchema.find(queryShowAll)
       .collation({ locale: "en", strength: 2 })
       .sort({ [sortBy]: sortOrder })
       .skip((page - 1) * limit)

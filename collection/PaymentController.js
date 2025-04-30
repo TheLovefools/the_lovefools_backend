@@ -64,8 +64,6 @@ const InitiatePayment = async (req, res) => {
 const HandlePaymentresponse = async (req, res) => {
   const orderId = req.body.order_id || req.body.orderId;
   const paymentHandler = PaymentHandler.getInstance();
-  
-  const customerNumber = req.body.sdk_payload.payload.customerPhone;
 
   if (orderId === undefined) {
     return res.send("Something went wrong");
@@ -95,13 +93,13 @@ const HandlePaymentresponse = async (req, res) => {
     if (orderStatus) {
 
       // 1. Send WhatsApp API
-      if (orderStatus === "CHARGED") {
+      if (orderStatus) {
         try {
           const apiResponse = await axios.post(
             `https://api.thelovefools.in/api/user/whatsappSuccess`,
             {
-              mobile: "9970775956",
-              bookingDate: "112266",
+              "mobile": "9970775956",
+              "bookingDate": "112266",
             }
           );
           console.log("WhatsApp sent successfully:", apiResponse.data);

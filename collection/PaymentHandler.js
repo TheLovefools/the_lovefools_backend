@@ -22,13 +22,16 @@ class SimpleLogger {
   }
 
   log(level, apiTag, paymentRequestId, message, value) {
+    if (this.disableLogging) return;
     const timestamp = this.formatDateTime(Date.now());
     let valueStr = value;
     if (typeof value === "object") {
       valueStr = JSON.stringify(value);
     }
-    const logMessage = `${timestamp} [${level.toUpperCase()}] apiTag=${apiTag}, paymentRequestId=${paymentRequestId}, message=${message}, value=${valueStr}${EOL}`;
-    fs.appendFile(this.logFilePath, logMessage, () => {});
+    const logMessage = `${timestamp} [${level.toUpperCase()}] apiTag1=${apiTag}, paymentRequestId=${paymentRequestId}, message=${message}, value=${valueStr}${EOL}`;
+    fs.appendFile(this.logFilePath, logMessage, (err) => {
+      if (err) console.error("Failed to write to log file:", err.message);
+    });
   }
 
   info(apiTag, paymentRequestId, message, value) {
@@ -42,18 +45,8 @@ class SimpleLogger {
   formatDateTime(timestamp) {
     const date = new Date(timestamp);
     const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
     const year = date.getFullYear();
     const month = months[date.getMonth()];
@@ -88,16 +81,37 @@ class PaymentHandler {
       const config = fs.readFileSync(configPath, "utf-8");
       this.paymentConfigs = JSON.parse(config);
     } catch (error) {
-      console.error(
-        "Failed to read configs from file, here's tbe error message:- " +
-          error.message
-      );
+      console.error("Failed to read configs from file, here's the error message:- " + error.message);
       throw new TypeError("Failed to find/read config file");
     }
     this.validatePaymentConfigs();
-    // this.logger = new SimpleLogger(this.getLoggingPath());
-    this.logger = new SimpleLoggerS3(this.getLoggingPath());
-    this.logger.disableLogging = !this.getEnableLogging();
+    // Initialize logger with fallback and log the result
+    try {
+      this.logger = new SimpleLoggerS3();
+      this.logger.disableLogging = !this.getEnableLogging();
+      console.log("Resolved log path success:", this.getLoggingPath());
+      console.log("Using SimpleLoggerS3 for logging.");
+      // Log to S3 logger: success
+      // this.logger.info(
+      //   "LOGGER_INIT",
+      //   "N/A",
+      //   "Logger initialized",
+      //   "Using SimpleLoggerS3 for logging"
+      // );
+    } catch (err) {
+      console.log("Resolved log path err:", this.getLoggingPath());
+      console.warn("Falling back to SimpleLogger. Reason:", err.message);      
+      this.logger = new SimpleLogger(this.getLoggingPath());
+      this.logger.disableLogging = !this.getEnableLogging();
+      // Log to file logger: fallback
+      // this.logger.info(
+      //   "LOGGER_INIT",
+      //   "N/A",
+      //   "Logger initialized",
+      //   `Fell back to SimpleLogger. Reason: ${err.message}`
+      // );
+    }
+
     PaymentHandler.paymentHandlerInstance = this;
     return PaymentHandler.paymentHandlerInstance;
   }
@@ -174,8 +188,8 @@ class PaymentHandler {
 
       this.logger.info(apiTag, paymentRequestId, "Request parameters", payload);
 
-      const fullPath = new URL(pathWithQueryParams, this.getBaseUrl()),
-        agent = new https.Agent({ keepAlive: true });
+      const fullPath = new URL(pathWithQueryParams, this.getBaseUrl());
+      const agent = new https.Agent({ keepAlive: true });
 
       this.logger.info(
         apiTag,
@@ -196,7 +210,7 @@ class PaymentHandler {
       const req = https.request(httpOptions);
 
       req.setTimeout(100000, () => {
-        this.logger.log(apiTag, paymentRequestId, {
+        this.logger.error(apiTag, paymentRequestId, {
           message: "Request has been timedout",
         });
         req.destroy(
@@ -252,6 +266,7 @@ class PaymentHandler {
           }
 
           if (res.statusCode >= 200 && res.statusCode < 300) {
+            // this.logger.info(apiTag, paymentRequestId, "Successful transaction", resJson);
             return resolve(resJson);
           } else {
             let status = resJson["status"],
@@ -370,7 +385,7 @@ class PaymentHandler {
 
   getEnableLogging() {
     return typeof this.paymentConfigs.ENABLE_LOGGING == "boolean"
-      ? !this.paymentConfigs.ENABLE_LOGGING
+      ? this.paymentConfigs.ENABLE_LOGGING
       : true;
   }
 

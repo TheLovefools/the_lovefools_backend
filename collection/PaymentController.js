@@ -90,25 +90,24 @@ const HandlePaymentresponse = async (req, res) => {
     const orderStatusResp = await paymentHandler.orderStatus(orderId);
     const orderStatus = orderStatusResp.status;
 
-    if (orderStatus) {
-
-      // 1. Send WhatsApp API
-      if (orderStatus) {
-        try {
-          const apiResponse = await axios.post(
-            `https://api.thelovefools.in/api/user/whatsappSuccess`,
-            {
-              "mobile": "9970775956",
-              "bookingDate": "112266",
-            }
-          );
-          console.log("WhatsApp sent successfully:", apiResponse.data);
-        } catch (error) {
-          console.error("WhatsApp API error:", error.message);
-          // Optional: log to DB or notify admin
-        }
+    // 1. Send WhatsApp API
+    if (orderStatus === "CHARGED") {
+      try {
+        const apiResponse = await axios.post(
+          `https://api.thelovefools.in/api/user/whatsappSuccess`,
+          {
+            "mobile": "9970775956",
+            "bookingDate": "11288266",
+          }
+        );
+        console.log("WhatsApp sent successfully:", apiResponse.data);
+      } catch (error) {
+        console.error("WhatsApp API error:", error.message);
+        // Optional: log to DB or notify admin
       }
-
+    }
+          
+    if (orderStatus) {
       try {
         await ReceiptSchema.findOneAndUpdate(
           { orderId },

@@ -92,12 +92,15 @@ const HandlePaymentresponse = async (req, res) => {
 
     // 1. Send WhatsApp API
     if (orderStatus === "CHARGED") {
+      let userMobile = orderStatusResp.customer_phone
+      let amount = orderStatusResp.amount
       try {
         const apiResponse = await axios.post(
           `https://api.thelovefools.in/api/user/whatsappSuccess`,
           {
             "mobile": "9970775956",
-            "bookingDate": "11288266",
+            "bookingDate": userMobile,
+            "amount": amount,
           }
         );
         console.log("WhatsApp sent successfully:", apiResponse.data);

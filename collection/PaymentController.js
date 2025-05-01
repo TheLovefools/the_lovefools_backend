@@ -150,15 +150,25 @@ const HandlePaymentresponse = async (req, res) => {
       try {
         const apiResponse = await axios.post(
           `https://api.thelovefools.in/api/user/whatsappSuccess`,
+          // {
+          //   "mobile": userMobile,
+          //   "bookingId": orderId,
+          //   "bookedRoom": bookedRoom,
+          //   "bookedTable": bookedTable,
+          //   "bookedMenu": bookedMenu,
+          //   "advancePayment": amount,
+          //   "bookingDate": bookedDate,
+          //   "bookingTime": bookedTime
+          // }
           {
-            "mobile": userMobile,
-            "bookingId": orderId,
-            "bookedRoom": bookedRoom,
-            "bookedTable": bookedTable,
-            "bookedMenu": bookedMenu,
-            "advancePayment": amount,
-            "bookingDate": bookedDate,
-            "bookingTime": bookedTime
+            "mobile": "9970775956",
+            "bookingId": amount,
+            "bookedRoom": userMobile,
+            "bookedTable": "9970775956",
+            "bookedMenu": "9970775956",
+            "advancePayment": "9970775956",
+            "bookingDate": "9970775956",
+            "bookingTime": "9970775956"
           }
         );
         console.log("WhatsApp sent successfully:", apiResponse.data);

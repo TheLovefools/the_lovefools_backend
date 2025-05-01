@@ -88,11 +88,11 @@ const InitiatePayment = async (req, res) => {
 
 const HandlePaymentresponse = async (req, res) => {
   const orderId = req.body.order_id || req.body.orderId;
-  const bookedRoom = req.body.bookedRoom;
-  const bookedTable = req.body.bookedTable;
-  const bookedDate = req.body.bookedDate;
-  const bookedTime = req.body.bookedTime;
-  const bookedMenu = req.body.bookedMenu;
+  const bookedRoom = req.body.udf6;
+  const bookedTable = req.body.udf7;
+  const bookedDate = req.body.udf8;
+  const bookedTime = req.body.udf9;
+  const bookedMenu = req.body.udf10;
   const paymentHandler = PaymentHandler.getInstance();
 
   if (orderId === undefined) {
@@ -150,25 +150,15 @@ const HandlePaymentresponse = async (req, res) => {
       try {
         const apiResponse = await axios.post(
           `https://api.thelovefools.in/api/user/whatsappSuccess`,
-          // {
-          //   "mobile": userMobile,
-          //   "bookingId": orderId,
-          //   "bookedRoom": bookedRoom,
-          //   "bookedTable": bookedTable,
-          //   "bookedMenu": bookedMenu,
-          //   "advancePayment": amount,
-          //   "bookingDate": bookedDate,
-          //   "bookingTime": bookedTime
-          // }
           {
-            "mobile": "9970775956",
-            "bookingId": amount,
-            "bookedRoom": userMobile,
-            "bookedTable": "9970775956",
-            "bookedMenu": "9970775956",
-            "advancePayment": "9970775956",
-            "bookingDate": "9970775956",
-            "bookingTime": "9970775956"
+            "mobile": userMobile,
+            "bookingId": orderId,
+            "bookedRoom": bookedRoom,
+            "bookedTable": bookedTable,
+            "bookedMenu": bookedMenu,
+            "advancePayment": amount,
+            "bookingDate": bookedDate,
+            "bookingTime": bookedTime
           }
         );
         console.log("WhatsApp sent successfully:", apiResponse.data);

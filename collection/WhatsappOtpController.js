@@ -17,7 +17,7 @@ const WhatsappOtp = async (req, res) => {
           parameters: [
             {
               type: "text",
-              text: '' + otp
+              text: Number(otp)
             }
           ]
         }

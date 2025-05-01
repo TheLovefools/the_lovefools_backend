@@ -9,6 +9,17 @@ const { default: axios } = require("axios");
 
 const upload = multer(); // Middleware for parsing FormData
 
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+
+// Initialize S3 client
+const s3 = new S3Client({
+  region: process.env.AWS_REGION, // e.g., "us-east-1"
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
 const InitiatePayment = async (req, res) => {
   await new Promise((resolve) => upload.any()(req, res, resolve)); // Parse FormData
 
@@ -78,9 +89,9 @@ const InitiatePayment = async (req, res) => {
 const HandlePaymentresponse = async (req, res) => {
   const orderId = req.body.order_id || req.body.orderId;
   const bookedRoom = req.body.bookedRoom;
+  const bookedTable = req.body.bookedTable;
   const bookedDate = req.body.bookedDate;
   const bookedTime = req.body.bookedTime;
-  const bookedTable = req.body.bookedTable;
   const bookedMenu = req.body.bookedMenu;
   const paymentHandler = PaymentHandler.getInstance();
 
@@ -110,9 +121,32 @@ const HandlePaymentresponse = async (req, res) => {
     const orderStatus = orderStatusResp.status;
 
     // 1. Send WhatsApp API
+    // if (orderStatus === "CHARGED") {
+    //   let userMobile = orderStatusResp.customer_phone
+    //   let amount = orderStatusResp.amount
+    //   try {
+    //     const apiResponse = await axios.post(
+    //       `https://api.thelovefools.in/api/user/whatsappSuccess`,
+    //       {
+    //         "mobile": userMobile,
+    //         "bookingId": orderId,
+    //         "bookedRoom": bookedRoom,
+    //         "bookedTable": bookedTable,
+    //         "bookedMenu": bookedMenu,
+    //         "advancePayment": amount,
+    //         "bookingDate": bookedDate,
+    //         "bookingTime": bookedTime
+    //       }
+    //     );
+    //     console.log("WhatsApp sent successfully:", apiResponse.data);
+    //   } catch (error) {
+    //     console.error("WhatsApp API error:", error.message);
+    //   }
+    // }
+
     if (orderStatus === "CHARGED") {
-      let userMobile = orderStatusResp.customer_phone
-      let amount = orderStatusResp.amount
+      let userMobile = orderStatusResp.customer_phone;
+      let amount = orderStatusResp.amount;
       try {
         const apiResponse = await axios.post(
           `https://api.thelovefools.in/api/user/whatsappSuccess`,
@@ -130,7 +164,25 @@ const HandlePaymentresponse = async (req, res) => {
         console.log("WhatsApp sent successfully:", apiResponse.data);
       } catch (error) {
         console.error("WhatsApp API error:", error.message);
-        // Optional: log to DB or notify admin
+    
+        // Prepare log message
+        let logContent = `Date: ${new Date().toISOString()}\nOrderID: ${orderId}\nError: ${error.message}\n\n`;
+    
+        // Upload log to S3
+        const command = new PutObjectCommand({
+          Bucket: "the-lovefools",
+          Key: `whatsapp-logs/whatsapp-error-${Date.now()}.txt`, // unique filename
+          Body: logContent,
+          ContentType: "text/plain",
+        });
+    
+        try {
+          // await s3.putObject(params).promise();
+          await s3.send(command);
+          console.log('Error log uploaded to S3');
+        } catch (s3Error) {
+          console.error('Failed to upload log to S3:', s3Error.message);
+        }
       }
     }
           

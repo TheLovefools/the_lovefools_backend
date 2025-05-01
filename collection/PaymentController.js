@@ -36,6 +36,11 @@ const InitiatePayment = async (req, res) => {
   const customer_phone = req.body.customer_phone;
   const first_name = req.body.first_name;
   const last_name = req.body.last_name;
+  const udf6 = req.body.udf6;
+  const udf7 = req.body.udf7;
+  const udf8 = req.body.udf8;
+  const udf9 = req.body.udf9;
+  const udf10 = req.body.udf10;
 
   try {
     const orderSessionResp = await paymentHandler.orderSession({
@@ -51,11 +56,21 @@ const InitiatePayment = async (req, res) => {
       customer_email,
       customer_phone,
       first_name,
-      last_name
+      last_name,
+      udf6,
+      udf7,
+      udf8,
+      udf9,
+      udf10
     });
     res.status(200).json({
       StatusCode: 200,
       orderId: order_id,
+      udf6,
+      udf7,
+      udf8,
+      udf9,
+      udf10,
       redict_url: orderSessionResp.payment_links.web,
     });
     // return res.redirect(orderSessionResp.payment_links.web);
@@ -73,11 +88,6 @@ const InitiatePayment = async (req, res) => {
 
 const HandlePaymentresponse = async (req, res) => {
   const orderId = req.body.order_id || req.body.orderId;
-  const bookedRoom = req.body.udf6;
-  const bookedTable = req.body.udf7;
-  const bookedDate = req.body.udf8;
-  const bookedTime = req.body.udf9;
-  const bookedMenu = req.body.udf10;
   const paymentHandler = PaymentHandler.getInstance();
 
   if (orderId === undefined) {
@@ -101,37 +111,19 @@ const HandlePaymentresponse = async (req, res) => {
       return res.send("Signature verification failed");
     }
 
-    // ✅ Continue with order status check
+    // Continue with order status check
     const orderStatusResp = await paymentHandler.orderStatus(orderId);
     const orderStatus = orderStatusResp.status;
 
     // 1. Send WhatsApp API
-    // if (orderStatus === "CHARGED") {
-    //   let userMobile = orderStatusResp.customer_phone
-    //   let amount = orderStatusResp.amount
-    //   try {
-    //     const apiResponse = await axios.post(
-    //       `https://api.thelovefools.in/api/user/whatsappSuccess`,
-    //       {
-    //         "mobile": userMobile,
-    //         "bookingId": orderId,
-    //         "bookedRoom": bookedRoom,
-    //         "bookedTable": bookedTable,
-    //         "bookedMenu": bookedMenu,
-    //         "advancePayment": amount,
-    //         "bookingDate": bookedDate,
-    //         "bookingTime": bookedTime
-    //       }
-    //     );
-    //     console.log("WhatsApp sent successfully:", apiResponse.data);
-    //   } catch (error) {
-    //     console.error("WhatsApp API error:", error.message);
-    //   }
-    // }
-
     if (orderStatus === "CHARGED") {
-      let userMobile = orderStatusResp.customer_phone;
-      let amount = orderStatusResp.amount;
+      const userMobile = orderStatusResp.customer_phone;
+      const amount = orderStatusResp.amount;
+      const bookedRoom = orderStatusResp.udf6;
+      const bookedTable = orderStatusResp.udf7;
+      const bookedDate = orderStatusResp.udf8;
+      const bookedTime = orderStatusResp.udf9;
+      const bookedMenu = orderStatusResp.udf10;
       try {
         const apiResponse = await axios.post(
           `https://api.thelovefools.in/api/user/whatsappSuccess`,
@@ -149,25 +141,6 @@ const HandlePaymentresponse = async (req, res) => {
         console.log("WhatsApp sent successfully:", apiResponse.data);
       } catch (error) {
         console.error("WhatsApp API error:", error.message);
-    
-        // Prepare log message
-        let logContent = `Date: ${new Date().toISOString()}\nOrderID: ${orderId}\nError: ${error.message}\n\n`;
-    
-        // Upload log to S3
-        const command = new PutObjectCommand({
-          Bucket: "the-lovefools",
-          Key: `whatsapp-logs/whatsapp-error-${Date.now()}.txt`, // unique filename
-          Body: logContent,
-          ContentType: "text/plain",
-        });
-    
-        try {
-          // await s3.putObject(params).promise();
-          await s3.send(command);
-          console.log('Error log uploaded to S3');
-        } catch (s3Error) {
-          console.error('Failed to upload log to S3:', s3Error.message);
-        }
       }
     }
           

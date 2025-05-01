@@ -1,7 +1,11 @@
 const axios = require('axios');
+const config = require("./config.json"); // Adjust path if needed
+const WHATSAPP_NUMBER = config.WHATSAPP_NUMBER;
+const WHATSAPP_API_KEY = config.WHATSAPP_API_KEY;
 
 const WhatsappOtp = async (req, res) => {
   const { mobile, otp } = req.body; // make sure you're sending `mobile` and `otp` in the request body
+  const waotp = otp.toString()
 
   const payload = {
     messaging_product: "whatsapp",
@@ -17,7 +21,7 @@ const WhatsappOtp = async (req, res) => {
           parameters: [
             {
               type: "text",
-              text: otp
+              text: waotp
             }
           ]
         }
@@ -25,10 +29,21 @@ const WhatsappOtp = async (req, res) => {
     }
   };
 
+  const payload2 = {
+    messaging_product: "whatsapp",
+    preview_url: false,
+    recipient_type: "individual",
+    to: mobile,
+    type: "text",
+    text: {
+      body: otp,
+    }
+  }    
+
   const headers = {
     "Content-Type": "application/json",
-    "wanumber": "919820203350",
-    "apikey": "0f23b062-0f82-11f0-ad4f-92672d2d0c2d"
+    "wanumber": WHATSAPP_NUMBER,
+    "apikey": WHATSAPP_API_KEY
   };
 
   try {

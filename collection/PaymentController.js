@@ -115,48 +115,7 @@ const HandlePaymentresponse = async (req, res) => {
     const orderStatusResp = await paymentHandler.orderStatus(orderId);
     const orderStatus = orderStatusResp.status;
 
-    // 1. Send WhatsApp API
-    if (orderStatus === "CHARGED") {
-      const userMobile = orderStatusResp.customer_phone;
-      const amount = orderStatusResp.amount;
-      const bookedRoom = orderStatusResp.udf6;
-      const bookedTable = orderStatusResp.udf7;
-      const bookedDate = orderStatusResp.udf8;
-      const bookedTime = orderStatusResp.udf9;
-      const bookedMenu = orderStatusResp.udf10;
-      try {
-        const apiResponse = await axios.post(
-          `https://api.thelovefools.in/api/user/whatsappSuccess`,
-          {
-            "mobile": userMobile,
-            "bookingId": orderId,
-            "bookedRoom": bookedRoom,
-            "bookedTable": bookedTable,
-            "bookedMenu": bookedMenu,
-            "advancePayment": amount,
-            "bookingDate": bookedDate,
-            "bookingTime": bookedTime
-          }
-        );
-        console.log("WhatsApp sent successfully:", apiResponse.data);
-      } catch (error) {
-        console.error("WhatsApp API error:", error.message);
-      }
-    }
-          
     if (orderStatus) {
-      try {
-        await ReceiptSchema.findOneAndUpdate(
-          { orderId },
-          {
-            orderStatus: orderStatusResp.status,
-            paymentSuccess: true,
-          }
-        );
-        return res.redirect("https://thelovefools.in/order-success");
-      } catch (error) {
-        console.log("orderId error", error);
-      }
       let message = "";
       switch (orderStatus) {
         case "CHARGED":
@@ -177,15 +136,61 @@ const HandlePaymentresponse = async (req, res) => {
           break;
       }
     }
-    
+
     const html = makeOrderStatusResponse(
       "Merchant Payment Response Page",
       message,
       req,
       orderStatusResp
     );
-    res.set("Content-Type", "text/html");
-    return res.send(html);
+
+    if (orderStatus === "CHARGED") {
+      const userMobile = orderStatusResp.customer_phone;
+      const amount = orderStatusResp.amount;
+      const bookedRoom = orderStatusResp.udf6;
+      const bookedTable = orderStatusResp.udf7;
+      const bookedDate = orderStatusResp.udf8;
+      const bookedTime = orderStatusResp.udf9;
+      const bookedMenu = orderStatusResp.udf10;
+
+      // 1. If payment success divert to success page
+      try {
+        await ReceiptSchema.findOneAndUpdate(
+          { orderId },
+          {
+            orderStatus: orderStatusResp.status,
+            paymentSuccess: true,
+          }
+        );
+        return res.redirect("https://thelovefools.in/order-success");
+      } catch (error) {
+        console.log("orderId error", error);
+      }
+
+      // 2. Send WhatsApp API
+      try {
+        const apiResponse = await axios.post(
+          `https://api.thelovefools.in/api/user/whatsappSuccess`,
+          {
+            "mobile": userMobile,
+            "bookingId": orderId,
+            "bookedRoom": bookedRoom,
+            "bookedTable": bookedTable,
+            "bookedMenu": bookedMenu,
+            "advancePayment": amount,
+            "bookingDate": bookedDate,
+            "bookingTime": bookedTime
+          }
+        );
+        console.log("WhatsApp sent successfully:", apiResponse.data);
+      } catch (error) {
+        console.error("WhatsApp API error:", error.message);
+      }
+
+    } else {
+      res.set("Content-Type", "text/html");
+      return res.send(html);
+    }
   } catch (error) {
     console.error(error);
     // [MERCHANT_TODO]:- please handle errors

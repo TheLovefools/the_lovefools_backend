@@ -36,11 +36,6 @@ const InitiatePayment = async (req, res) => {
   const customer_phone = req.body.customer_phone;
   const first_name = req.body.first_name;
   const last_name = req.body.last_name;
-  const booked_room = req.body.booked_room;
-  const booked_table = req.body.booked_table;
-  const booked_date = req.body.booked_date;
-  const booked_time = req.body.booked_time;
-  const booked_for = req.body.booked_for;
 
   try {
     const orderSessionResp = await paymentHandler.orderSession({
@@ -56,21 +51,11 @@ const InitiatePayment = async (req, res) => {
       customer_email,
       customer_phone,
       first_name,
-      last_name,
-      booked_room,
-      booked_table,
-      booked_date,
-      booked_time,
-      booked_for
+      last_name
     });
     res.status(200).json({
       StatusCode: 200,
       orderId: order_id,
-      bookedRoom: booked_room,
-      bookedTable: booked_table,
-      bookedDate: booked_date,
-      bookedTime: booked_time,
-      bookedMenu: booked_for,
       redict_url: orderSessionResp.payment_links.web,
     });
     // return res.redirect(orderSessionResp.payment_links.web);

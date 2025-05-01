@@ -129,7 +129,7 @@ const getPhoto = async (req, res) => {
     }
 
     if (!fileUrl) {
-      return res.status(404).json({ message: "File not found" });
+      return res.status(404).json({ message: "getPhoto: File not found" });
     }
 
     res.json({
@@ -169,10 +169,15 @@ const DeleteImg = async (req, res) => {
   const bucketName = AWS_BUCKET_NAME; // Replace with your S3 bucket name
   const key = `uploads/${req.body.PhotoUrl}`; // Include folder and file extension
 
-  if (!key) {
-    return res
-      .status(400)
-      .json({ error: "Key is required to delete the file." });
+  // if (!key) {
+  //   return res
+  //     .status(400)
+  //     .json({ error: "Key is required to delete the file." });
+  // }
+
+  // Bypass the deletion if no valid PhotoUrl is provided
+  if (!key || key === 'uploads/') {
+    return res.status(200).json({ message: "No photo to delete." }); // Skip deletion if no photo URL
   }
 
   try {
@@ -184,8 +189,13 @@ const DeleteImg = async (req, res) => {
 
     const versions = await s3.listObjectVersions(listParams).promise();
 
-    if (versions.Versions.length === 0) {
-      return res.status(404).json({ error: `File not found. ${key}` });
+    // if (versions.Versions.length === 0) {
+    //   return res.status(404).json({ error: `DeleteImg: File not found. ${key}` });
+    // }
+    
+    if (!versions.Versions || versions.Versions.length === 0) {
+      console.warn(`DeleteImg: File not found. ${key}, skipping delete.`);
+      return res.status(200).json({ message: `No existing file to delete for ${key}. Continuing.` }); // ✅ just skip, don't return 404
     }
 
     // Prepare delete requests for all versions

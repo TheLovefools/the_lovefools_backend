@@ -17,7 +17,7 @@ const AddAlaCarteData = async (req, res) => {
 };
 
 
-const UpdateAlaCarteData = async (req, res) => {
+const UpdateAlaCarteDataOld = async (req, res) => {
   try {
     const alaMenuId = req.params.alaMenuId;
 
@@ -46,6 +46,47 @@ const UpdateAlaCarteData = async (req, res) => {
     res.status(500).json({ message: "Error updating event", error });
   }
 };
+
+const UpdateAlaCarteData = async (req, res) => {
+  try {
+    const alaMenuId = req.params.alaMenuId;
+
+    // Check if alaMenuId is provided
+    if (!alaMenuId) {
+      return res.status(400).json({ message: "AlaCarteMenu ID is required" });
+    }
+
+    // Prepare the data for updating
+    const updateData = { ...req.body };
+
+    // If there's no photo field in the body (e.g. no new photo uploaded),
+    // we don't want to overwrite the existing photo with null or undefined
+    if (!req.body.photo) {
+      delete updateData.photo;  // Remove the photo field from updateData
+    }
+
+    // Update the AlaCarteMenu entry by its ID
+    const updatedAlaCarteMenu = await AlaCarteMenuSchema.findOneAndUpdate(
+      { _id: alaMenuId }, 
+      updateData
+    );
+
+    // If the event is not found, return a 404 response
+    if (!updatedAlaCarteMenu) {
+      return res
+        .status(404)
+        .json({ StatusCode: 404, message: "AlaCarteMenu not found" });
+    }
+
+    // Respond with the updated event data
+    res.status(200).json({ StatusCode: 200, data: updatedAlaCarteMenu });
+  } catch (error) {
+    // Handle any errors during the process
+    console.error(error);
+    res.status(500).json({ message: "Error updating AlaCarteMenu", error });
+  }
+};
+
 
 const GetAlaCarteMenuByUser = async (req, res) => {
   try {

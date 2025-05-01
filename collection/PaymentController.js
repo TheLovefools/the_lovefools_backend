@@ -25,6 +25,11 @@ const InitiatePayment = async (req, res) => {
   const customer_phone = req.body.customer_phone;
   const first_name = req.body.first_name;
   const last_name = req.body.last_name;
+  const booked_room = req.body.booked_room;
+  const booked_table = req.body.booked_table;
+  const booked_date = req.body.booked_date;
+  const booked_time = req.body.booked_time;
+  const booked_for = req.body.booked_for;
 
   try {
     const orderSessionResp = await paymentHandler.orderSession({
@@ -37,15 +42,24 @@ const InitiatePayment = async (req, res) => {
       // please note you don't have to give payment_page_client_id here, it's mandatory but
       // PaymentHandler will read it from config.json file
       // payment_page_client_id: paymentHandler.getPaymentPageClientId()
-
       customer_email,
       customer_phone,
       first_name,
-      last_name
+      last_name,
+      booked_room,
+      booked_table,
+      booked_date,
+      booked_time,
+      booked_for
     });
     res.status(200).json({
       StatusCode: 200,
       orderId: order_id,
+      bookedRoom: booked_room,
+      bookedTable: booked_table,
+      bookedDate: booked_date,
+      bookedTime: booked_time,
+      bookedMenu: booked_for,
       redict_url: orderSessionResp.payment_links.web,
     });
     // return res.redirect(orderSessionResp.payment_links.web);
@@ -63,6 +77,11 @@ const InitiatePayment = async (req, res) => {
 
 const HandlePaymentresponse = async (req, res) => {
   const orderId = req.body.order_id || req.body.orderId;
+  const bookedRoom = req.body.bookedRoom;
+  const bookedDate = req.body.bookedDate;
+  const bookedTime = req.body.bookedTime;
+  const bookedTable = req.body.bookedTable;
+  const bookedMenu = req.body.bookedMenu;
   const paymentHandler = PaymentHandler.getInstance();
 
   if (orderId === undefined) {
@@ -98,9 +117,14 @@ const HandlePaymentresponse = async (req, res) => {
         const apiResponse = await axios.post(
           `https://api.thelovefools.in/api/user/whatsappSuccess`,
           {
-            "mobile": "9970775956",
-            "bookingDate": userMobile,
-            "amount": amount,
+            "mobile": userMobile,
+            "bookingId": orderId,
+            "bookedRoom": bookedRoom,
+            "bookedTable": bookedTable,
+            "bookedMenu": bookedMenu,
+            "advancePayment": amount,
+            "bookingDate": bookedDate,
+            "bookingTime": bookedTime
           }
         );
         console.log("WhatsApp sent successfully:", apiResponse.data);

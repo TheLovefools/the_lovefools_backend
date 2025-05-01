@@ -4,7 +4,8 @@ const WHATSAPP_NUMBER = config.WHATSAPP_NUMBER;
 const WHATSAPP_API_KEY = config.WHATSAPP_API_KEY;
 
 const WhatsappPaymentConfirmation = async (req, res) => {
-  const { mobile, bookingDate, amount } = req.body; // make sure you're sending `mobile` and `otp` in the request body
+  // make sure you're sending `mobile` in the request body
+  const { mobile, bookingId, bookedRoom, bookedTable, bookedMenu, advancePayment, bookingDate, bookingTime } = req.body; 
 
   const payload = {
     messaging_product: "whatsapp",
@@ -20,23 +21,23 @@ const WhatsappPaymentConfirmation = async (req, res) => {
           parameters: [
             {
               type: "text",
-              text: "text1"
+              text: bookingId
             },
             {
               type: "text",
-              text: "text2"
+              text: bookedRoom
             },
             {
               type: "text",
-              text: "text3"
+              text: bookedTable
             },
             {
               type: "text",
-              text: "text4"
+              text: bookedMenu
             },
             {
               type: "text",
-              text: amount
+              text: "₹ "+advancePayment
             },
             {
               type: "text",
@@ -44,7 +45,7 @@ const WhatsappPaymentConfirmation = async (req, res) => {
             },
             {
               type: "text",
-              text: "text7"
+              text: bookingTime
             },
           ]
         }

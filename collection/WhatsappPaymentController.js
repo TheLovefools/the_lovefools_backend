@@ -6,6 +6,11 @@ const WHATSAPP_API_KEY = config.WHATSAPP_API_KEY;
 const WhatsappPaymentConfirmation = async (req, res) => {
   // make sure you're sending `mobile` in the request body
   const { mobile, bookingId, bookedRoom, bookedTable, bookedMenu, advancePayment, bookingDate, bookingTime } = req.body; 
+  const formattedDate = new Date(bookingDate).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   const payload = {
     messaging_product: "whatsapp",
@@ -41,7 +46,7 @@ const WhatsappPaymentConfirmation = async (req, res) => {
             },
             {
               type: "text",
-              text: bookingDate
+              text: formattedDate
             },
             {
               type: "text",

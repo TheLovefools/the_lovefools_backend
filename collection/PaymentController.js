@@ -9,17 +9,6 @@ const { default: axios } = require("axios");
 
 const upload = multer(); // Middleware for parsing FormData
 
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-
-// Initialize S3 client
-const s3 = new S3Client({
-  region: process.env.AWS_REGION, // e.g., "us-east-1"
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
-
 const InitiatePayment = async (req, res) => {
   await new Promise((resolve) => upload.any()(req, res, resolve)); // Parse FormData
 

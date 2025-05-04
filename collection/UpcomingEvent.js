@@ -25,10 +25,19 @@ const UpdateUpcomingEventData = async (req, res) => {
       return res.status(400).json({ message: "UpcomingEvent ID is required" });
     }
 
+    // Prepare the data for updating
+    const updateData = { ...req.body };
+
+    // If there's no photo field in the body (e.g. no new photo uploaded),
+    // we don't want to overwrite the existing photo with null or undefined
+    if (!req.body.photo) {
+      delete updateData.photo;  // Remove the photo field from updateData
+    } 
+
     // Update the upcomingEvent with the new data from the request body
     const updatedEvent = await UpcomingEventSchema.findOneAndUpdate(
       { _id: upcomingEventID }, // Query to find the upcomingEvent by ID
-      req.body
+      updateData
     );
 
     // If the upcomingEvent is not found, return a 404 response

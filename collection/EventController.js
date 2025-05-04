@@ -37,7 +37,7 @@ const UpdateEventData = async (req, res) => {
     // Update the event with the new data from the request body
     const updatedEvent = await EventSchema.findOneAndUpdate(
       { _id: eventId }, // Query to find the event by ID
-      req.body
+      updateData
     );
 
     // If the event is not found, return a 404 response

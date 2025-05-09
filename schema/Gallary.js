@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const GallerySchema = new mongoose.Schema({
   gallery_Name: { type: String, required: true },
   description: { type: String, required: true },
+  youtube_iframe: { type: String, required: true },
   type: { type: String },
   photo: { type: String },
   video: { type: String },

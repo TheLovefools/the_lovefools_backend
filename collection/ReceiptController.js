@@ -101,6 +101,56 @@ const GetReceiptsList = async (req, res) => {
   }
 };
 
+const GetAllReceiptsList = async (req, res) => {
+  try {
+    const sortBy = "created_date";
+    const sortOrder = parseInt(req.body.sortOrder, 10) || -1;
+    const limit = parseInt(10000);
+    const page = parseInt(req.body.page, 10) || 1;
+    const searchKey = req.body.search || "";
+
+    // Fields allowed for searching
+    const searchableFields = ["emailId", "receiptName", "menuName", "status"];
+
+    const queryShowAll = {
+      ...(searchKey && {
+        $or: searchableFields.map((field) => ({
+          [field]: { $regex: searchKey, $options: "i" }, // Case-insensitive match
+        })),
+      }),
+    };
+
+    const totalReceipts = await ReceiptSchema.countDocuments(queryShowAll);
+
+    // const receipts = await ReceiptSchema.find(queryShowAll)
+    //   .collation({ locale: "en", strength: 2 })
+    //   .sort({ [sortBy]: sortOrder })
+    //   .skip((page - 1) * limit)
+    //   .limit(limit);
+
+    const receipts = await ReceiptSchema.find(queryShowAll)
+      .collation({ locale: "en", strength: 2 })
+      .sort({ [sortBy]: sortOrder })
+      .limit(10000); // limit but no skip
+
+    res.status(200).json({
+      StatusCode: 200,
+      data: receipts,
+      pageData: {
+        total: totalReceipts,
+        page: page,
+        limit: limit,
+      },
+    });
+  } catch (error) {
+    console.error("Error retrieving receipts:", error);
+    res.status(500).json({
+      message: "Error retrieving receipts",
+      error: error.message || "Unknown error",
+    });
+  }
+};
+
 
 const DeleteReceipt = async (req, res) => {
   try {
@@ -143,5 +193,6 @@ module.exports = {
   AddReceiptData,
   UpdateReceiptData,
   GetReceiptsList,
+  GetAllReceiptsList,
   DeleteReceipt,
 };

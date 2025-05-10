@@ -9,6 +9,7 @@ const {
   AddReceiptData,
   UpdateReceiptData,
   GetReceiptsList,
+  GetAllReceiptsList,
   DeleteReceipt,
 } = require("../collection/ReceiptController");
 
@@ -146,6 +147,7 @@ router.get("/protected", TokenVerification);
 router.post("/addReceipt", AddReceiptData);
 router.post("/updateReceipt/:receiptId", UpdateReceiptData);
 router.post("/getReceiptList", GetReceiptsList);
+router.post("/getAllReceiptList", GetAllReceiptsList);
 router.post("/deleteReceipt/:receiptId", DeleteReceipt);
 
 //Payment module

@@ -6,10 +6,14 @@ const ReceiptSchema = new mongoose.Schema({
   emailId: { type: String, required: true },
   mobileNo: { type: String, required: true },
   room: { type: String, required: true },
+  room_id: { type: mongoose.Schema.Types.ObjectId, ref: "Room", required: true },
   table_number: { type: String, required: true },
-  date: { type: Date, required: true }, // Consider changing to Number if appropriate
+  table_id: { type: mongoose.Schema.Types.ObjectId, ref: "Table", required: true },
+  date: { type: Date, required: true },
+  bookingDate: { type: Date, required: true },
   time: { type: String, required: true },
-  price: { type: Number, required: true }, // Consider changing to Number if appropriate
+  bookingSlot: { type: String, required: true },
+  price: { type: Number, required: true },
   type: { type: String, required: true },
   sub_type: { type: String, required: true },
   orderStatus: { type: String, required: true }, // Get order status code

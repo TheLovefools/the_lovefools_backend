@@ -43,6 +43,13 @@ const {
 } = require("../collection/EventController");
 
 const {
+  AddPartyBooking,
+  UpdatePartyBooking,
+  GetPartyBookingList,
+  DeletePartyBooking,
+} = require("../collection/PartyBookingController");
+
+const {
   AddGalleryData,
   UpdateGalleryData,
   GetGalleryList,
@@ -176,7 +183,7 @@ router.post("/updateMenu/:menuId", UpdateMenuData);
 router.post("/getMenuList", GetMenuList);
 router.post("/deleteMenu/:menuId", DeleteMenu);
 
-//Menu module
+//Room module
 router.post("/addRoom", AddRoomData);
 router.post("/updateRoom/:roomId", UpdateRoomData);
 router.post("/getRoomList", GetRoomList);
@@ -200,11 +207,17 @@ router.post("/updateUserInformation/:userId", UpdateUserInformationData);
 router.post("/getUserInformationList", GetUserInformationList);
 router.post("/deleteUserInformation/:userId", DeleteUserInformation);
 
-//Table module
+//Events module
 router.post("/addEvent", AddEventData);
 router.post("/updateEvent/:eventId", UpdateEventData);
 router.post("/getEventList", GetEventsList);
 router.post("/deleteEvent/:eventId", DeleteEvent);
+
+//Party Booking module
+router.post("/addParty", AddPartyBooking);
+router.post("/updateParty/:partyId", UpdatePartyBooking);
+router.post("/getPartyList", GetPartyBookingList);
+router.post("/deleteParty/:partyId", DeletePartyBooking);
 
 //Gallery module
 router.post("/addGallery", AddGalleryData);

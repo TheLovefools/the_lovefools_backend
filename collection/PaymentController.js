@@ -50,7 +50,7 @@ const InitiatePayment = async (req, res) => {
       udf7,
       udf8,
       udf9,
-      udf10
+      udf10,
     });
     res.status(200).json({
       StatusCode: 200,
@@ -89,12 +89,15 @@ const HandlePaymentresponse = async (req, res) => {
       status: req.body.status,
       order_id: req.body.order_id,
       signature: req.body.signature,
-      signature_algorithm: req.body.signature_algorithm
+      signature_algorithm: req.body.signature_algorithm,
     };
-    
+
     // 🔐 Validate HMAC
-    // const isValid = validateHMAC_SHA256(req.body, paymentHandler.getResponseKey());
-    const isValid = validateHMAC_SHA256(validationParams, paymentHandler.getResponseKey());
+    const isValid = validateHMAC_SHA256(
+      req.body,
+      paymentHandler.getResponseKey()
+    );
+    // const isValid = validateHMAC_SHA256(validationParams, paymentHandler.getResponseKey());
 
     if (!isValid) {
       return res.send("Signature verification failed");
@@ -132,7 +135,7 @@ const HandlePaymentresponse = async (req, res) => {
         console.error("WhatsApp API error:", error.message);
       }
     }
-          
+
     if (orderStatus) {
       try {
         await ReceiptSchema.findOneAndUpdate(
@@ -166,7 +169,7 @@ const HandlePaymentresponse = async (req, res) => {
           break;
       }
     }
-    
+
     const html = makeOrderStatusResponse(
       "Merchant Payment Response Page",
       message,

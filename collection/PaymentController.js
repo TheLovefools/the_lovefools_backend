@@ -86,12 +86,32 @@ const HandlePaymentresponse = async (req, res) => {
   try {
 
     // 🔐 Validate HMAC
-    if (
-      validateHMAC_SHA256(req.body, paymentHandler.getResponseKey()) === false
-    ) {
-      // [MERCHANT_TODO]:- validation failed, it's critical error
+
+    const validationParams = {
+      status_id: req.body.status_id,
+      status: req.body.status,
+      order_id: req.body.order_id,
+      signature: req.body.signature,
+      signature_algorithm: req.body.signature_algorithm,
+    };
+
+    // 🔐 Validate HMAC
+    // const isValid = validateHMAC_SHA256(
+    //   req.body,
+    //   paymentHandler.getResponseKey()
+    // );
+    const isValid = validateHMAC_SHA256(validationParams, paymentHandler.getResponseKey());
+    if (!isValid) {
       return res.send("Signature verification failed");
     }
+
+    // if (
+    //   validateHMAC_SHA256(req.body, paymentHandler.getResponseKey()) === false
+    // ) {
+    //   // [MERCHANT_TODO]:- validation failed, it's critical error
+    //   return res.send("Signature verification failed");
+    // }
+
 
     // Continue with order status check
     const orderStatusResp = await paymentHandler.orderStatus(orderId);

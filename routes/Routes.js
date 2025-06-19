@@ -93,6 +93,7 @@ const {
   GetOrderStatus,
 } = require("../collection/PaymentStatusController");
 const {
+  CreateBookingAndInitiatePayment,
   InitiatePayment,
   InitiatePaymentRefund,
   HandlePaymentresponse
@@ -158,6 +159,7 @@ router.post("/getAllReceiptList", GetAllReceiptsList);
 router.post("/deleteReceipt/:receiptId", DeleteReceipt);
 
 //Payment module
+router.post("/createBookingAndInitiatePayment", CreateBookingAndInitiatePayment);
 router.post("/initiatePayment", InitiatePayment);
 router.post("/handlePaymentResponse", HandlePaymentresponse);
 router.post("/initiateRefund", InitiatePaymentRefund);

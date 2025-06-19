@@ -9,39 +9,69 @@ const { default: axios } = require("axios");
 
 const upload = multer(); // Middleware for parsing FormData
 
-const InitiatePayment = async (req, res) => {
-  await new Promise((resolve) => upload.any()(req, res, resolve)); // Parse FormData
-
-  // const orderId = `order_${Date.now()}`;
-  // const amount = req.body.amount;
-  const returnUrl = `https://api.thelovefools.in/api/user/handlePaymentResponse`;
-  // const paymentHandler = PaymentHandler.getInstance(req.body.order_id);
-  // const paymentHandler = new PaymentHandler(req.body.order_id);
-  const paymentHandler = PaymentHandler.getInstance(req.body.order_id);
-
-  const order_id = req.body.order_id;
-  const amount = req.body.amount;
-  const customer_email = req.body.customer_email;
-  const customer_phone = req.body.customer_phone;
-  const first_name = req.body.first_name;
-  const last_name = req.body.last_name;
-  const udf6 = req.body.udf6;
-  const udf7 = req.body.udf7;
-  const udf8 = req.body.udf8;
-  const udf9 = req.body.udf9;
-  const udf10 = req.body.udf10;
-
+const CreateBookingAndInitiatePayment = async (req, res) => {
   try {
+    const {
+      order_id,
+      receiptName,
+      emailId,
+      mobileNo,
+      room,
+      room_id,
+      table_number,
+      table_id,
+      date,
+      bookingDate,
+      time,
+      bookingSlot,
+      price,
+      type,
+      sub_type,
+      customer_email,
+      customer_phone,
+      first_name,
+      last_name,
+      udf6,
+      udf7,
+      udf8,
+      udf9,
+      udf10,
+    } = req.body;
+
+    // 1. Save trusted booking
+    const newReceipt = new ReceiptSchema({
+      orderId: order_id,
+      receiptName,
+      emailId,
+      mobileNo,
+      room,
+      room_id,
+      table_number,
+      table_id,
+      date,
+      bookingDate,
+      time,
+      bookingSlot,
+      price,
+      type,
+      sub_type,
+      orderStatus: "new",
+      paymentSuccess: false,
+    });
+    await newReceipt.save();
+
+    // 2. Get trusted amount
+    const amount = newReceipt.price;
+    const returnUrl = `https://api.thelovefools.in/api/user/handlePaymentResponse`;
+
+    // 3. Create payment session
+    const paymentHandler = PaymentHandler.getInstance(order_id);
     const orderSessionResp = await paymentHandler.orderSession({
-      order_id: order_id,
-      amount: amount,
+      order_id,
+      amount,
       currency: "INR",
       return_url: returnUrl,
-      customer_id: "sample-customer-id",
-      // [MERCHANT_TODO]:- please handle customer_id, it's an optional field but we suggest to use it.
-      // please note you don't have to give payment_page_client_id here, it's mandatory but
-      // PaymentHandler will read it from config.json file
-      // payment_page_client_id: paymentHandler.getPaymentPageClientId()
+      customer_id: "customer_" + order_id,
       customer_email,
       customer_phone,
       first_name,
@@ -52,6 +82,54 @@ const InitiatePayment = async (req, res) => {
       udf9,
       udf10,
     });
+
+    return res.status(200).json({
+      StatusCode: 200,
+      orderId: order_id,
+      redict_url: orderSessionResp.payment_links.web,
+    });
+
+  } catch (error) {
+    console.error(error);
+    if (error instanceof APIException) {
+      return res.send("PaymentHandler threw some error");
+    }
+    return res.status(500).send("Something went wrong");
+  }
+};
+
+const InitiatePayment = async (req, res) => {
+  await new Promise((resolve) => upload.any()(req, res, resolve)); // Parse FormData
+
+  const order_id = req.body.order_id;
+
+  const order = await ReceiptSchema.findOne({ orderId: order_id });
+  if (!order) {
+    return res.status(400).json({ error: "Invalid order ID" });
+  }
+
+  const amount = order.price; // trusted
+  const returnUrl = `https://api.thelovefools.in/api/user/handlePaymentResponse`;
+  const paymentHandler = PaymentHandler.getInstance(order_id);
+
+  try {
+    const orderSessionResp = await paymentHandler.orderSession({
+      order_id,
+      amount,
+      currency: "INR",
+      return_url: returnUrl,
+      customer_id: "customer_" + order_id,
+      customer_email: req.body.customer_email,
+      customer_phone: req.body.customer_phone,
+      first_name: req.body.first_name,
+      last_name: req.body.last_name,
+      udf6: req.body.udf6,
+      udf7: req.body.udf7,
+      udf8: req.body.udf8,
+      udf9: req.body.udf9,
+      udf10: req.body.udf10,
+    });
+
     res.status(200).json({
       StatusCode: 200,
       orderId: order_id,
@@ -79,68 +157,54 @@ const HandlePaymentresponse = async (req, res) => {
   const orderId = req.body.order_id || req.body.orderId;
   const paymentHandler = PaymentHandler.getInstance();
 
-  if (orderId === undefined) {
+  if (!orderId) {
     return res.send("Something went wrong");
   }
 
   try {
 
-    // 🔐 Validate HMAC
+    // Wait 5 seconds to test logs
+    // await new Promise(resolve => setTimeout(resolve, 10000));
 
-    const validationParams = {
-      status_id: req.body.status_id,
-      status: req.body.status,
-      order_id: req.body.order_id,
-      signature: req.body.signature,
-      signature_algorithm: req.body.signature_algorithm,
-    };
+    // Continue after delay & Get real order from DB
+    const receipt = await ReceiptSchema.findOne({ orderId });
+    if (!receipt) {
+      return res.send("HPR: Invalid order ID");
+    }
+
+    const trustedAmount = receipt.price; // your trusted amount
+    console.log("Client says amount:", req.body.amount);
+    console.log("Trusted DB amount:", trustedAmount);
 
     // 🔐 Validate HMAC
-    // const isValid = validateHMAC_SHA256(
-    //   req.body,
-    //   paymentHandler.getResponseKey()
-    // );
-    const isValid = validateHMAC_SHA256(validationParams, paymentHandler.getResponseKey());
-    if (!isValid) {
+    if (!validateHMAC_SHA256(req.body, paymentHandler.getResponseKey())) {
       return res.send("Signature verification failed");
     }
 
-    // if (
-    //   validateHMAC_SHA256(req.body, paymentHandler.getResponseKey()) === false
-    // ) {
-    //   // [MERCHANT_TODO]:- validation failed, it's critical error
-    //   return res.send("Signature verification failed");
-    // }
-
-
-    // Continue with order status check
     const orderStatusResp = await paymentHandler.orderStatus(orderId);
     const orderStatus = orderStatusResp.status;
 
-    // 1. Send WhatsApp API
+    const gatewayAmount = orderStatusResp.amount;
+    if (Number(gatewayAmount) !== Number(trustedAmount)) {
+      return res.send("Amount mismatch: possible tampering detected.");
+    }
+
+    // Send WhatsApp & update DB
     if (orderStatus === "CHARGED") {
-      const userMobile = orderStatusResp.customer_phone;
-      const amount = orderStatusResp.amount;
-      const bookedRoom = orderStatusResp.udf6;
-      const bookedTable = orderStatusResp.udf7;
-      const bookedDate = orderStatusResp.udf8;
-      const bookedTime = orderStatusResp.udf9;
-      const bookedMenu = orderStatusResp.udf10;
       try {
-        const apiResponse = await axios.post(
+        await axios.post(
           `https://api.thelovefools.in/api/user/whatsappSuccess`,
           {
-            "mobile": userMobile,
-            "bookingId": orderId,
-            "bookedRoom": bookedRoom,
-            "bookedTable": bookedTable,
-            "bookedMenu": bookedMenu,
-            "advancePayment": amount,
-            "bookingDate": bookedDate,
-            "bookingTime": bookedTime
+            mobile: orderStatusResp.customer_phone,
+            bookingId: orderId,
+            bookedRoom: orderStatusResp.udf6,
+            bookedTable: orderStatusResp.udf7,
+            bookedMenu: orderStatusResp.udf10,
+            advancePayment: gatewayAmount,
+            bookingDate: orderStatusResp.udf8,
+            bookingTime: orderStatusResp.udf9,
           }
         );
-        console.log("WhatsApp sent successfully:", apiResponse.data);
       } catch (error) {
         console.error("WhatsApp API error:", error.message);
       }
@@ -203,14 +267,26 @@ const InitiatePaymentRefund = async () => {
   const paymentHandler = PaymentHandler.getInstance();
 
   try {
+    const receipt = await ReceiptSchema.findOne({ orderId: req.body.order_id });
+    if (!receipt) {
+      return res.status(400).send("IPR: Invalid order ID");
+    }
+
+    const originalAmount = receipt.price;
+    const requestedAmount = Number(req.body.amount);
+    if (requestedAmount <= 0 || requestedAmount > originalAmount) {
+      return res.status(400).send("IPR: Invalid refund amount");
+    }
+
     const refundResp = await paymentHandler.refund({
       order_id: req.body.order_id,
-      amount: req.body.amount,
+      amount: requestedAmount,
       unique_request_id: req.body.unique_request_id || `refund_${Date.now()}`,
     });
+
     const html = makeOrderStatusResponse(
       "Merchant Refund Page",
-      `Refund status:- ${refundResp.status}`,
+      `Refund status: ${refundResp.status}`,
       req,
       refundResp
     );
@@ -247,7 +323,7 @@ const makeOrderStatusResponse = (title, message, req, response) => {
         <title>${title}</title>
     </head>
     <body>
-        <h1>${message}</h1>
+      <h1>${message}</h1>
 
         <center>
             <font size="4" color="blue"><b>Return url request body params</b></font>
@@ -268,6 +344,7 @@ const makeOrderStatusResponse = (title, message, req, response) => {
 };
 
 module.exports = {
+  CreateBookingAndInitiatePayment,
   InitiatePayment,
   InitiatePaymentRefund,
   HandlePaymentresponse,

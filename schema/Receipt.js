@@ -14,6 +14,8 @@ const ReceiptSchema = new mongoose.Schema({
   time: { type: String, required: true },
   bookingSlot: { type: String, required: true },
   price: { type: Number, required: true },
+  unitPrice: { type: Number, required: true },
+  quantity: { type: Number, required: true },
   type: { type: String, required: true },
   sub_type: { type: String, required: true },
   orderStatus: { type: String, required: true }, // Get order status code

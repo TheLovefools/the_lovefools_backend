@@ -5,9 +5,11 @@ const {
 } = require("./PaymentHandler");
 const multer = require("multer");
 const ReceiptSchema = require("../schema/Receipt");
+const MenuSchema = require("../schema/Menu");
 const { default: axios } = require("axios");
-
 const upload = multer(); // Middleware for parsing FormData
+const fixedPriceForAlacarteMenu = 500; // 500 Rs per person
+const setMenuMultiple = 0.5   // your business rule: 50% advance
 
 const CreateBookingAndInitiatePayment = async (req, res) => {
   try {
@@ -24,9 +26,10 @@ const CreateBookingAndInitiatePayment = async (req, res) => {
       bookingDate,
       time,
       bookingSlot,
-      price,
-      type,
-      sub_type,
+      menu_id,
+      menuType,
+      subMenuType,
+      quantity,
       customer_email,
       customer_phone,
       first_name,
@@ -38,7 +41,33 @@ const CreateBookingAndInitiatePayment = async (req, res) => {
       udf10,
     } = req.body;
 
-    // 1. Save trusted booking
+    // 1. Validate quantity: must be >= 1
+    const qty = Math.max(Number(quantity) || 1, 1);
+
+    // 2. Calculate total amount
+    let unitPrice = 0;
+    let totalPrice = 0;
+
+    if (menuType === "1") {
+      // Ala Carte
+      unitPrice = fixedPriceForAlacarteMenu;
+      totalPrice = unitPrice * qty;
+    } else if (menuType === "2") {
+      // Set Menu must have valid ID
+      if (!menu_id) {
+        return res.status(400).json({ error: "menu_id required for Set Menu" });
+      }
+      const menu = await MenuSchema.findById(menu_id);
+      if (!menu) {
+        return res.status(400).json({ error: "Invalid set menu ID" });
+      }
+      unitPrice = menu.price;
+      totalPrice = unitPrice * setMenuMultiple;
+    } else {
+      return res.status(400).json({ error: "Unknown menu type" });
+    }
+
+    // 3. Save trusted booking
     const newReceipt = new ReceiptSchema({
       orderId: order_id,
       receiptName,
@@ -52,23 +81,23 @@ const CreateBookingAndInitiatePayment = async (req, res) => {
       bookingDate,
       time,
       bookingSlot,
-      price,
-      type,
-      sub_type,
+      price: totalPrice,
+      unitPrice: unitPrice,
+      quantity: qty,
+      type: menuType,
+      sub_type: subMenuType,
       orderStatus: "new",
       paymentSuccess: false,
     });
     await newReceipt.save();
 
-    // 2. Get trusted amount
-    const amount = newReceipt.price;
+    // 4. Proceed to create payment session
     const returnUrl = `https://api.thelovefools.in/api/user/handlePaymentResponse`;
 
-    // 3. Create payment session
     const paymentHandler = PaymentHandler.getInstance(order_id);
     const orderSessionResp = await paymentHandler.orderSession({
       order_id,
-      amount,
+      amount: totalPrice,
       currency: "INR",
       return_url: returnUrl,
       customer_id: "customer_" + order_id,
@@ -90,11 +119,11 @@ const CreateBookingAndInitiatePayment = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("CBI error:", error);
     if (error instanceof APIException) {
       return res.send("PaymentHandler threw some error");
     }
-    return res.status(500).send("Something went wrong");
+    return res.status(500).send("CBI_: Something went wrong");
   }
 };
 
@@ -148,7 +177,7 @@ const InitiatePayment = async (req, res) => {
       return res.send("PaymentHandler threw some error");
     }
     // [MERCHANT_TODO]:- please handle errors
-    return res.send("Something went wrong");
+    return res.send("IP: Something went wrong");
     // return res.send(error);
   }
 };
@@ -158,7 +187,7 @@ const HandlePaymentresponse = async (req, res) => {
   const paymentHandler = PaymentHandler.getInstance();
 
   if (!orderId) {
-    return res.send("Something went wrong");
+    return res.send("HPR_1: Something went wrong");
   }
 
   try {
@@ -183,6 +212,7 @@ const HandlePaymentresponse = async (req, res) => {
 
     const orderStatusResp = await paymentHandler.orderStatus(orderId);
     const orderStatus = orderStatusResp.status;
+    const orderStatusId = orderStatusResp.status_id;
 
     const gatewayAmount = orderStatusResp.amount;
     if (Number(gatewayAmount) !== Number(trustedAmount)) {
@@ -210,7 +240,8 @@ const HandlePaymentresponse = async (req, res) => {
       }
     }
 
-    if (orderStatus) {
+    // Update orderStatus in DB if charged/not 21==="CHARGED"
+    if (orderStatusId === 21 || orderStatus === "CHARGED") {
       try {
         await ReceiptSchema.findOneAndUpdate(
           { orderId },
@@ -223,7 +254,10 @@ const HandlePaymentresponse = async (req, res) => {
       } catch (error) {
         console.log("orderId error", error);
       }
-      let message = "";
+    }
+
+    let message = "";
+    if (orderStatus) {
       switch (orderStatus) {
         case "CHARGED":
           message = "order payment done successfully";
@@ -242,6 +276,17 @@ const HandlePaymentresponse = async (req, res) => {
           message = "order status " + orderStatus;
           break;
       }
+
+      try {
+        await ReceiptSchema.findOneAndUpdate(
+          { orderId },
+          {
+            orderStatus: orderStatusResp.status,
+          }
+        );
+      } catch (error) {
+        console.log("orderStatus Update error", error);
+      }
     }
 
     const html = makeOrderStatusResponse(
@@ -259,7 +304,7 @@ const HandlePaymentresponse = async (req, res) => {
       return res.send("PaymentHandler threw some error");
     }
     // [MERCHANT_TODO]:- please handle errors
-    return res.send("Something went wrong");
+    return res.send("HPR_2: Something went wrong");
   }
 };
 
@@ -299,7 +344,7 @@ const InitiatePaymentRefund = async () => {
       return res.send("PaymentHandler threw some error");
     }
     // [MERCHANT_TODO]:- please handle errors
-    return res.send("Something went wrong");
+    return res.send("IPR: Something went wrong");
   }
 };
 

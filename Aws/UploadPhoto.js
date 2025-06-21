@@ -55,7 +55,7 @@ const isVideoFile = (extension) => {
 const replaceFileIfExists = async (req, res, next) => {
   const id = req.body.id || req.params.id;
 
-  console.log('Uploaded files:', req.file);
+  console.log('Uploaded files replaceFileIfExists():', req.file);
 
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded." });
@@ -143,7 +143,9 @@ const getPhoto = async (req, res) => {
 };
 
 const uploadFileToS3 = async (file, id, isVideo) => {
-  const s3Key = `uploads/${id}-${path.extname(file.originalname)}`;
+  // const s3Key = `uploads/${id}-${path.extname(file.originalname)}`;
+  const ext = path.extname(file.originalname);
+  const s3Key = `uploads/${id}${ext}`;
   const fileContent = fsp.readFileSync(file.path);
   const params = {
     Bucket: AWS_BUCKET_NAME,

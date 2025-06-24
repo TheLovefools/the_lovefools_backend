@@ -86,7 +86,9 @@ const CreateBookingAndInitiatePayment = async (req, res) => {
       quantity: qty,
       type: menuType,
       sub_type: subMenuType,
+      orderName: udf10,
       orderStatus: "new",
+      orderStatusID: "",
       paymentSuccess: false,
     });
     await newReceipt.save();
@@ -247,12 +249,26 @@ const HandlePaymentresponse = async (req, res) => {
           { orderId },
           {
             orderStatus: orderStatusResp.status,
+            orderStatusID: orderStatusId,
             paymentSuccess: true,
           }
         );
         return res.redirect("https://thelovefools.in/order-success");
       } catch (error) {
-        console.log("orderId error", error);
+        console.log("order status charged error", error);
+      }
+    } else {
+      try {
+        await ReceiptSchema.findOneAndUpdate(
+          { orderId },
+          {
+            orderStatus: orderStatusResp.status,
+            orderStatusID: orderStatusId,
+            paymentSuccess: false,
+          }
+        );
+      } catch (error) {
+        console.log("orderId update error", error);
       }
     }
 
@@ -275,17 +291,6 @@ const HandlePaymentresponse = async (req, res) => {
         default:
           message = "order status " + orderStatus;
           break;
-      }
-
-      try {
-        await ReceiptSchema.findOneAndUpdate(
-          { orderId },
-          {
-            orderStatus: orderStatusResp.status,
-          }
-        );
-      } catch (error) {
-        console.log("orderStatus Update error", error);
       }
     }
 

@@ -18,7 +18,9 @@ const ReceiptSchema = new mongoose.Schema({
   quantity: { type: Number, required: true },
   type: { type: String, required: true },
   sub_type: { type: String, required: true },
+  orderName: { type: String, required: true }, // Get order Name
   orderStatus: { type: String, required: true }, // Get order status code
+  orderStatusID: { type: String, required: true }, // Get order status ID
   paymentSuccess: { type: Boolean, required: true },
   created_date: { type: Date, default: Date.now }, // Correct type and set default value
 });

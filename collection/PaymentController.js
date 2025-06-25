@@ -88,7 +88,7 @@ const CreateBookingAndInitiatePayment = async (req, res) => {
       sub_type: subMenuType,
       orderName: udf10,
       orderStatus: "new",
-      orderStatusID: "",
+      orderStatusID: "001",
       paymentSuccess: false,
     });
     await newReceipt.save();

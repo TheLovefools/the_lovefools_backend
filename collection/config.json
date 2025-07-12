@@ -4,7 +4,7 @@
   "CUSTOMER_ID": "32538765",
   "ENABLE_LOGGING": true,
   "PAYMENT_PAGE_CLIENT_ID": "hdfcmaster",
-  "BASE_URL": "https://smartgatewayuat.hdfcbank.com",
+  "BASE_URL": "https://smartgateway.hdfcbank.com",
   "RESPONSE_KEY": "23C8F27937F4ED098B2AF179E41225",
   "LOGGING_PATH": "https://the-lovefools.s3.eu-north-1.amazonaws.com/uploads/PaymentHandler.log",
   "WHATSAPP_NUMBER": "919820203350",
